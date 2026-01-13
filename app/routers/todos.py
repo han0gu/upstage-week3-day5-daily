@@ -1,6 +1,6 @@
 from typing import List
 from fastapi import APIRouter, Depends, Request
-import mysql.connector
+from sqlalchemy.orm import Session
 from app.services.todo_service import TodoService
 from app.models.todo import TodoCreate, TodoResponse
 from app.database.connection import get_db
@@ -8,15 +8,14 @@ from app.database.connection import get_db
 router = APIRouter(prefix="/todos", tags=["todos"])
 
 
-def get_todo_service(conn: mysql.connector.MySQLConnection = Depends(get_db)) -> TodoService:
+def get_todo_service(db: Session = Depends(get_db)) -> TodoService:
     """TodoService 의존성 주입"""
-    return TodoService(conn)
+    return TodoService(db)
 
 
 @router.post("", response_model=TodoResponse)
 async def create_todo(
-    request: Request,
-    service: TodoService = Depends(get_todo_service)
+    request: Request, service: TodoService = Depends(get_todo_service)
 ):
     """Todo 생성"""
     body = await request.json()
@@ -31,9 +30,6 @@ def get_todos(service: TodoService = Depends(get_todo_service)):
 
 
 @router.delete("/{todo_id}")
-def delete_todo(
-    todo_id: int,
-    service: TodoService = Depends(get_todo_service)
-):
+def delete_todo(todo_id: int, service: TodoService = Depends(get_todo_service)):
     """Todo 삭제"""
     return service.delete_todo(todo_id)
