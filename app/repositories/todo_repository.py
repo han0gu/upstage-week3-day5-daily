@@ -1,54 +1,33 @@
-import mysql.connector
-from typing import List, Optional, Tuple
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from app.models.todo_orm import TodoORM
 
 
 class TodoRepository:
-    def __init__(self, conn: mysql.connector.MySQLConnection):
-        self.conn = conn
+    def __init__(self, db: Session):
+        self.db = db
 
-    def create(self, content: str) -> int:
-        """Todo 생성하고 ID 반환"""
-        cursor = self.conn.cursor()
-        try:
-            cursor.execute(
-                "INSERT INTO todo (content) VALUES (%s)",
-                (content,)
-            )
-            self.conn.commit()
-            return cursor.lastrowid
-        finally:
-            cursor.close()
+    def create(self, content: str) -> TodoORM:
+        """Todo 생성하고 반환"""
+        todo = TodoORM(content=content)
+        self.db.add(todo)
+        self.db.commit()
+        self.db.refresh(todo)
+        return todo
 
-    def find_by_id(self, todo_id: int) -> Optional[Tuple]:
+    def find_by_id(self, todo_id: int) -> Optional[TodoORM]:
         """ID로 Todo 조회"""
-        cursor = self.conn.cursor()
-        try:
-            cursor.execute(
-                "SELECT * FROM todo WHERE id = %s",
-                (todo_id,)
-            )
-            return cursor.fetchone()
-        finally:
-            cursor.close()
+        return self.db.query(TodoORM).filter(TodoORM.id == todo_id).first()
 
-    def find_all(self) -> List[Tuple]:
+    def find_all(self) -> List[TodoORM]:
         """모든 Todo 조회"""
-        cursor = self.conn.cursor()
-        try:
-            cursor.execute("SELECT * FROM todo")
-            return cursor.fetchall()
-        finally:
-            cursor.close()
+        return self.db.query(TodoORM).all()
 
     def delete(self, todo_id: int) -> int:
         """Todo 삭제하고 영향받은 행 수 반환"""
-        cursor = self.conn.cursor()
-        try:
-            cursor.execute(
-                "DELETE FROM todo WHERE id = %s",
-                (todo_id,)
-            )
-            self.conn.commit()
-            return cursor.rowcount
-        finally:
-            cursor.close()
+        todo = self.db.query(TodoORM).filter(TodoORM.id == todo_id).first()
+        if todo:
+            self.db.delete(todo)
+            self.db.commit()
+            return 1
+        return 0
