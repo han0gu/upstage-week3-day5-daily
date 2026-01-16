@@ -2,15 +2,15 @@ services:
   mysql:
     image: mysql:8.0
     ports:
-      - "3306:3306"
+      - "${MYSQL_PORT:-3306}:3306"
     environment:
-      - MYSQL_ROOT_PASSWORD=password
-      - MYSQL_DATABASE=llmagent
-      - MYSQL_USER=tester
-      - MYSQL_PASSWORD=tester
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
 
   adminer:
     image: adminer
     restart: always
     ports:
-      - "8081:8080"
+      - "${ADMINER_PORT:-8081}:8080"
