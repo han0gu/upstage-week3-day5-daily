@@ -3,6 +3,8 @@ from sqlalchemy.orm import sessionmaker, Session
 from typing import Generator
 from app.models.todo_orm import Base
 
+import logging
+
 # 데이터베이스 URL
 DATABASE_URL = "mysql+pymysql://root:password@localhost:3306/test_db"
 
@@ -23,5 +25,12 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db():
-    """데이터베이스 테이블 생성 (선택사항)"""
-    Base.metadata.create_all(bind=engine)
+    """데이터베이스 테이블 생성 (이미 존재하는 경우 무시)"""
+    try:
+        # checkfirst=True는 기본값이지만 명시적으로 설정
+        # 이미 테이블이 존재하면 아무 작업도 하지 않음
+        Base.metadata.create_all(bind=engine, checkfirst=True)
+    except Exception as e:
+        # 테이블 생성 중 오류가 발생해도 앱 시작을 막지 않음
+        # 로깅은 필요시 추가 가능
+        logging.info(f"데이터베이스 테이블 생성 중 오류 발생 (무시됨): {e}")
